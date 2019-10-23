@@ -81,3 +81,8 @@ for row in y_prediction['Column1']:
 y_pred['new_label']= new_label
 
 test = y_pred.iloc[0]
+
+if __name__ == '__main__':
+    df =pd.read_excel('data.xlsx')
+    todummy = ['Study_Number']
+    new_data = dummy_data(df, todummy)
