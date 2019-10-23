@@ -91,7 +91,7 @@ if __name__ == '__main__':
     df_miss['Residual_Oxygen_(%)']= df_miss['Residual_Oxygen_(%)']/maxoxy
 
     maxhex = df_miss['Hexanal_(ppm)'].max()
-    df_miss['Residual_Oxygen (%)']= df_miss['Hexanal_(ppm)']/maxhex
+    df_miss['Hexanal_(ppm)']= df_miss['Hexanal_(ppm)']/maxhex
 
 
     trainX, testX, trainY, traindf, testdf = predict_Moisture(df_miss)
