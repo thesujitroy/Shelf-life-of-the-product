@@ -41,7 +41,7 @@ def dummy_data(df, todummy):
 def create_mlp(dim, regress=False):
 	# define our MLP network
 	model = Sequential()
-	model.add(Dense(100, input_dim=dim, activation="relu"))
+	model.add(Dense(80, input_dim=dim, activation="relu"))
 	#model.add(Dense(4, activation="relu"))
 
 	# check to see if the regression node should be added
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 #    model = create_mlp(trainX.shape[1], regress=True)
 #    opt = Adam(lr=1e-4, decay=1e-3 / 51)
 #    model.compile(loss="mean_squared_error", optimizer=opt)
-#    model.fit(Xtrain, Ytrain,validation_data=(Xtest, Ytest),epochs=50, batch_size=10)
+#    model.fit(Xtrain, Ytrain,validation_data=(Xtest, Ytest),epochs=100, batch_size=10)
 #    preds = model.predict(Xtest)
 #    diff = preds - Ytest
 #    percentDiff = (diff / Ytest) * 100
@@ -126,6 +126,6 @@ if __name__ == '__main__':
 
     result = pd.concat([traindf,testX], join = 'outer')
     result.sort_index(inplace=True)
-    result['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']*maxmos
+    result['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']*maxoxy
     df_miss1['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']
     export_csv = df_miss1.to_csv (r'C:\Users\sb00747428\Downloads\pepsico challenge\predict_Residual_Oxygen.csv', index = None, header=True)
