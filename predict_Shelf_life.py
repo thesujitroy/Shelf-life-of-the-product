@@ -18,7 +18,8 @@ Created on Wed Oct 23 16:24:43 2019
 
 @author: sb00747428
 """
-
+from sklearn.svm import SVR
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import Imputer
@@ -43,42 +44,42 @@ def dummy_data(df, todummy):
         df= df.drop(x, 1)
         df = pd.concat([df, dummies], axis=1)
     return df
-    
+
 
 def create_mlp(dim, regress=False):
 	# define our MLP network
 	model = Sequential()
-	model.add(Dense(80, input_dim=dim, activation="relu"))
-	#model.add(Dense(4, activation="relu"))
- 
+	model.add(Dense(40, input_dim=dim, activation="relu"))
+	model.add(Dense(4, activation="relu"))
+
 	# check to see if the regression node should be added
 	if regress:
 		model.add(Dense(1, activation="linear"))
- 
+
 	# return our model
 	return model
 
-def predict_Residual_Oxygen(df_miss):
-    x=pd.DataFrame(columns=['Residual_Oxygen_(%)'])
-    imputdf = df_miss.drop(['Residual_Oxygen_(%)'], axis =1)
-    x['Residual_Oxygen_(%)'] = df_miss['Residual_Oxygen_(%)']
-    
+def predict_Sample_Age(df_miss):
+    x=pd.DataFrame(columns=['Sample_Age_(Weeks)(%)'])
+    imputdf = df_miss.drop(['Sample_Age_(Weeks)'], axis =1)
+    x['Sample_Age_(Weeks)'] = df_miss['Sample_Age_(Weeks)']
+
     imputdf.isnull().sum().sort_values(ascending=False).head()
     imp = Imputer(missing_values="NaN", strategy = 'median', axis=0)
     imp.fit(imputdf)
     imputdf = pd.DataFrame(data=imp.transform(imputdf), columns=imputdf.columns)
-    imputdf['Residual_Oxygen_(%)']=x['Residual_Oxygen_(%)']
-    
-    testdf = imputdf[df_miss['Residual_Oxygen_(%)'].isnull()]
-    traindf = imputdf[df_miss['Residual_Oxygen_(%)'].notnull()]
-    trainX = traindf.drop(['Residual_Oxygen_(%)'], axis =1)
-    testX = testdf.drop(['Residual_Oxygen_(%)'], axis =1)
-    trainY = traindf.loc[:,['Residual_Oxygen_(%)']]
+    imputdf['Sample_Age_(Weeks)']=x['Sample_Age_(Weeks)']
+
+    testdf = imputdf.assign(Difference_From_Fresh= 20)
+    traindf = imputdf[df_miss['Sample_Age_(Weeks)'].notnull()]
+    trainX = traindf.drop(['Sample_Age_(Weeks)'], axis =1)
+    testX = testdf.drop(['Sample_Age_(Weeks)'], axis =1)
+    trainY = traindf.loc[:,['Sample_Age_(Weeks)']]
     #testY =testdf.loc[:,['Moisture_(%)']]
     #trainX.isnull().sum().sort_values(ascending=False).head()
 
     return trainX, testX, trainY, traindf, testdf
-    
+
 
 
 
@@ -86,35 +87,35 @@ if __name__ == '__main__':
     df =pd.read_excel('data.xlsx')
     todummy = ['Study_Number']
     new_data = dummy_data(df, todummy)
-    
-    df_miss = new_data.drop(['Sample_ID','Transparent_ Window_in_Package','Sample_Age_(Weeks)'], axis =1)
-    df_miss1 = new_data.drop(['Sample_ID','Transparent_ Window_in_Package','Sample_Age_(Weeks)'], axis =1)
-    df_final = new_data.drop(['Sample_ID','Transparent_ Window_in_Package'], axis =1)
-    
-    
+
+    df_miss = new_data.drop(['Sample_ID','Transparent_ Window_in_Package','Hexanal_(ppm)'], axis =1)
+    df_miss1 = pd.read_excel('shelf-life-study-data-for-analytics-challenge_prediction.xlsx')
+    df_final = new_data.drop(['Sample_ID','Transparent_ Window_in_Package','Hexanal_(ppm)'], axis =1)
+
+
 
     # train the model
-   
+
     maxdiff = df_miss['Difference_From_Fresh'].max()
     df_miss['Difference_From_Fresh']= df_miss['Difference_From_Fresh']/maxdiff
-    
+
     maxmos = df_miss['Moisture_(%)'].max()
     df_miss['Moisture_(%)']= df_miss['Moisture_(%)']/maxmos
-    
+
     maxoxy = df_miss['Residual_Oxygen_(%)'].max()
     df_miss['Residual_Oxygen_(%)']= df_miss['Residual_Oxygen_(%)']/maxoxy
-    
-    maxhex = df_miss['Hexanal_(ppm)'].max()
-    df_miss['Hexanal_(ppm)']= df_miss['Hexanal_(ppm)']/maxhex
-    
-    
-    trainX, testX, trainY, traindf, testdf = predict_Residual_Oxygen(df_miss)
+
+    maxweek = df_miss['Sample_Age_(Weeks)'].max()
+    df_miss['Sample_Age_(Weeks)']= df_miss['Sample_Age_(Weeks)']+1
+    df_miss['Sample_Age_(Weeks)']= df_miss['Sample_Age_(Weeks)']/maxweek
+
+    trainX, testX, trainY, traindf, testdf = predict_Sample_Age(df_miss)
     '''validation check'''
 #    Xtrain,Xtest, Ytrain, Ytest =train_test_split(trainX,trainY, test_size=0.10, random_state = 1)
 #    model = create_mlp(trainX.shape[1], regress=True)
-#    opt = Adam(lr=1e-4, decay=1e-3 / 51)
+#    opt = Adam(lr=1e-3, decay=1e-3 / 51)
 #    model.compile(loss="mean_squared_error", optimizer=opt)
-#    model.fit(Xtrain, Ytrain,validation_data=(Xtest, Ytest),epochs=100, batch_size=10)
+#    model.fit(Xtrain, Ytrain,validation_data=(Xtest, Ytest),epochs=40, batch_size=5)
 #    preds = model.predict(Xtest)
 #    diff = preds - Ytest
 #    percentDiff = (diff / Ytest) * 100
@@ -129,10 +130,9 @@ if __name__ == '__main__':
     model.compile(loss="mean_squared_error", optimizer=opt)
     model.fit(trainX, trainY,epochs=50, batch_size=10)
     preds = model.predict(testX)
-    testX['Residual_Oxygen_(%)']=preds
-    
-    result = pd.concat([traindf,testX], join = 'outer')
-    result.sort_index(inplace=True)
-    result['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']*maxoxy
-    df_miss1['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']
-    export_csv = df_miss1.to_csv (r'C:\Users\sb00747428\Downloads\pepsico challenge\predict_Residual_Oxygen.csv', index = None, header=True)
+    preds= np.abs(preds)
+
+    testX['Sample_Age_(Weeks)']=(preds*maxweek)+1
+
+    df_miss1['Prediction'] = testX['Sample_Age_(Weeks)']
+    export_csv = df_miss1.to_csv (r'C:\Users\sb00747428\Downloads\pepsico challenge\predict_shelf_life.csv', index = None, header=True)
