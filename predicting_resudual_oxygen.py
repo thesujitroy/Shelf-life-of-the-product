@@ -51,22 +51,22 @@ def create_mlp(dim, regress=False):
 	# return our model
 	return model
 
-def predict_Moisture(df_miss):
-    x=pd.DataFrame(columns=['Moisture_(%)'])
-    imputdf = df_miss.drop(['Moisture_(%)'], axis =1)
-    x['Moisture_(%)'] = df_miss['Moisture_(%)']
+def predict_Residual_Oxygen(df_miss):
+    x=pd.DataFrame(columns=['Residual_Oxygen_(%)'])
+    imputdf = df_miss.drop(['Residual_Oxygen_(%)'], axis =1)
+    x['Residual_Oxygen_(%)'] = df_miss['Residual_Oxygen_(%)']
 
     imputdf.isnull().sum().sort_values(ascending=False).head()
     imp = Imputer(missing_values="NaN", strategy = 'median', axis=0)
     imp.fit(imputdf)
     imputdf = pd.DataFrame(data=imp.transform(imputdf), columns=imputdf.columns)
-    imputdf['Moisture_(%)']=x['Moisture_(%)']
+    imputdf['Residual_Oxygen_(%)']=x['Residual_Oxygen_(%)']
 
-    testdf = imputdf[df_miss['Moisture_(%)'].isnull()]
-    traindf = imputdf[df_miss['Moisture_(%)'].notnull()]
-    trainX = traindf.drop(['Moisture_(%)'], axis =1)
-    testX = testdf.drop(['Moisture_(%)'], axis =1)
-    trainY = traindf.loc[:,['Moisture_(%)']]
+    testdf = imputdf[df_miss['Residual_Oxygen_(%)'].isnull()]
+    traindf = imputdf[df_miss['Residual_Oxygen_(%)'].notnull()]
+    trainX = traindf.drop(['Residual_Oxygen_(%)'], axis =1)
+    testX = testdf.drop(['Residual_Oxygen_(%)'], axis =1)
+    trainY = traindf.loc[:,['Residual_Oxygen_(%)']]
     #testY =testdf.loc[:,['Moisture_(%)']]
     #trainX.isnull().sum().sort_values(ascending=False).head()
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     df_miss['Hexanal_(ppm)']= df_miss['Hexanal_(ppm)']/maxhex
 
 
-    trainX, testX, trainY, traindf, testdf = predict_Moisture(df_miss)
+    trainX, testX, trainY, traindf, testdf = predict_Residual_Oxygen(df_miss)
     '''validation check'''
 #    Xtrain,Xtest, Ytrain, Ytest =train_test_split(trainX,trainY, test_size=0.10, random_state = 1)
 #    model = create_mlp(trainX.shape[1], regress=True)
@@ -122,10 +122,10 @@ if __name__ == '__main__':
     model.compile(loss="mean_squared_error", optimizer=opt)
     model.fit(trainX, trainY,epochs=50, batch_size=10)
     preds = model.predict(testX)
-    testX['Moisture_(%)']=preds
+    testX['Residual_Oxygen_(%)']=preds
 
     result = pd.concat([traindf,testX], join = 'outer')
     result.sort_index(inplace=True)
-    result['Moisture_(%)'] = result['Moisture_(%)']*maxmos
-    df_miss1['Moisture_(%)'] = result['Moisture_(%)']
-    export_csv = df_miss1.to_csv (r'C:\Users\sb00747428\Downloads\pepsico challenge\Moisture_data.csv', index = None, header=True)
+    result['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']*maxmos
+    df_miss1['Residual_Oxygen_(%)'] = result['Residual_Oxygen_(%)']
+    export_csv = df_miss1.to_csv (r'C:\Users\sb00747428\Downloads\pepsico challenge\predict_Residual_Oxygen.csv', index = None, header=True)
